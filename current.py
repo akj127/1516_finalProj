@@ -29,10 +29,10 @@ class Robot:
         self.path = []
         self.wait_timer = 0
 
-    def move_to_node(self, node_x, node_y):
+    def move_to_node(self, node_x, node_y, robots):
         self.target_node = Node(node_x * CELL_SIZE + CELL_SIZE // 2, node_y * CELL_SIZE + CELL_SIZE // 2)
         if self.path_planned:
-            self.path = self.find_path()
+            self.path = self.find_path(robots)
 
     def can_move_to(self, new_x, new_y, robots):
         for robot in robots:
@@ -130,7 +130,7 @@ clock = pygame.time.Clock()
 
 # Create robots
 robots = [Robot(random.randint(0, NUM_NODES_X - 1) * CELL_SIZE + CELL_SIZE // 2,
-                random.randint(0, NUM_NODES_Y - 1) * CELL_SIZE + CELL_SIZE // 2) for _ in range(NUM_ROBOTS - 1)]
+                random.randint(0, NUM_NODES_Y - 1) * CELL_SIZE + CELL_SIZE // 2, path_planned=True) for _ in range(NUM_ROBOTS - 1)]
 robots.append(Robot(random.randint(0, NUM_NODES_X - 1) * CELL_SIZE + CELL_SIZE // 2,
                     random.randint(0, NUM_NODES_Y - 1) * CELL_SIZE + CELL_SIZE // 2, path_planned=True))
 
@@ -140,7 +140,7 @@ nodes = [[Node((x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE) for y in range(NUM_NODE
 # Assign random target nodes to robots
 for robot in robots:
     target_node = random.choice(random.choice(nodes))
-    robot.move_to_node(target_node.x // CELL_SIZE, target_node.y // CELL_SIZE)
+    robot.move_to_node(target_node.x // CELL_SIZE, target_node.y // CELL_SIZE, robots)
 
 # Main loop
 while True:
@@ -162,7 +162,7 @@ while True:
         # If the robot reached its target node, assign a new random target node
         if not robot.path_planned and robot.target_node is None:
             target_node = random.choice(random.choice(nodes))
-            robot.move_to_node(target_node.x // CELL_SIZE, target_node.y // CELL_SIZE)
+            robot.move_to_node(target_node.x // CELL_SIZE, target_node.y // CELL_SIZE, robots)
 
     # Handle events
     for event in pygame.event.get():
