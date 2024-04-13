@@ -17,7 +17,8 @@ CELL_SIZE = 40
 NUM_NODES_X = (WIDTH - CELL_SIZE) // CELL_SIZE
 NUM_NODES_Y = (HEIGHT - CELL_SIZE) // CELL_SIZE
 NUM_ROBOTS = 4  # Number of robots
-WAIT_TIME = 1 
+WAIT_TIME = 1
+PathLength = 5 
 
 # Define robot class
 class Robot:
@@ -57,6 +58,8 @@ class Robot:
                     self.path.pop(0)
             else:
                 self.wait_timer = WAIT_TIME  # Start waiting
+        elif self.path_planned :
+            self.move_to_node(self.target_node.x, self.target_node.y, robots)
         elif self.target_node:
             dx = 1 if self.target_node.x > self.x else -1 if self.target_node.x < self.x else 0
             dy = 1 if self.target_node.y > self.y else -1 if self.target_node.y < self.y else 0
@@ -76,7 +79,7 @@ class Robot:
         heapq.heappush(open_list, (0, start, []))
         while open_list:
             cost, current, path = heapq.heappop(open_list)
-            if current == end:
+            if current == end or len(path)> PathLength:
                 return [Node((x + 0.5) * CELL_SIZE, (y + 0.5) * CELL_SIZE) for x, y in path]
             if current in closed_list:
                 continue
@@ -88,7 +91,7 @@ class Robot:
                 for robot in robots:
                     dist = abs(robot.x // CELL_SIZE - neighbor[0]) + abs(robot.y // CELL_SIZE - neighbor[1])
                     if dist < 2:  # Define a threshold for considering neighboring bots
-                        new_cost += 10  # Increase the cost for nodes near other robots
+                        new_cost += dist  # Increase the cost for nodes near other robots
                 heapq.heappush(open_list, (new_cost + self.heuristic(neighbor, end), neighbor, new_path))
         return []
 
