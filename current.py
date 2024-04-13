@@ -17,6 +17,7 @@ CELL_SIZE = 40
 NUM_NODES_X = (WIDTH - CELL_SIZE) // CELL_SIZE
 NUM_NODES_Y = (HEIGHT - CELL_SIZE) // CELL_SIZE
 NUM_ROBOTS = 4  # Number of robots
+WAIT_TIME = 1 
 
 # Define robot class
 class Robot:
@@ -26,30 +27,48 @@ class Robot:
         self.target_node = None
         self.path_planned = path_planned
         self.path = []
+        self.wait_timer = 0
 
     def move_to_node(self, node_x, node_y):
         self.target_node = Node(node_x * CELL_SIZE + CELL_SIZE // 2, node_y * CELL_SIZE + CELL_SIZE // 2)
         if self.path_planned:
             self.path = self.find_path()
 
+    def can_move_to(self, new_x, new_y, robots):
+        for robot in robots:
+            if robot is not self and abs(new_x - robot.x) < CELL_SIZE and abs(new_y - robot.y) < CELL_SIZE:
+                return False
+        return True
+    
     def update(self):
+        if self.wait_timer > 0:
+            self.wait_timer -= 1
+            return
         if self.path_planned and self.path:
             next_node = self.path[0]
             dx = 1 if next_node.x > self.x else -1 if next_node.x < self.x else 0
             dy = 1 if next_node.y > self.y else -1 if next_node.y < self.y else 0
-            self.x += dx
-            self.y += dy
-            if self.x == next_node.x and self.y == next_node.y:
-                self.path.pop(0)
+            new_x = self.x + dx
+            new_y = self.y + dy
+            if self.can_move_to(new_x, new_y, robots):
+                self.x = new_x
+                self.y = new_y
+                if self.x == next_node.x and self.y == next_node.y:
+                    self.path.pop(0)
+            else:
+                self.wait_timer = WAIT_TIME  # Start waiting
         elif self.target_node:
             dx = 1 if self.target_node.x > self.x else -1 if self.target_node.x < self.x else 0
             dy = 1 if self.target_node.y > self.y else -1 if self.target_node.y < self.y else 0
-            self.x += dx
-            self.y += dy
-            if self.x == self.target_node.x and self.y == self.target_node.y:
-                self.target_node = None
+            new_x = self.x + dx
+            new_y = self.y + dy
+            if self.can_move_to(new_x, new_y, robots):
+                self.x = new_x
+                self.y = new_y
+                if self.x == self.target_node.x and self.y == self.target_node.y:
+                    self.target_node = None
 
-    def find_path(self):
+    def find_path(self, robots):
         start = (self.x // CELL_SIZE, self.y // CELL_SIZE)
         end = (self.target_node.x // CELL_SIZE, self.target_node.y // CELL_SIZE)
         open_list = []
@@ -65,11 +84,22 @@ class Robot:
             for neighbor in self.get_neighbors(current):
                 new_cost = cost + 1  # Assuming all edges have a cost of 1
                 new_path = path + [current]
+                # Adding cost for neighboring bots
+                for robot in robots:
+                    dist = abs(robot.x // CELL_SIZE - neighbor[0]) + abs(robot.y // CELL_SIZE - neighbor[1])
+                    if dist < 2:  # Define a threshold for considering neighboring bots
+                        new_cost += 10  # Increase the cost for nodes near other robots
                 heapq.heappush(open_list, (new_cost + self.heuristic(neighbor, end), neighbor, new_path))
         return []
 
     def heuristic(self, current, end):
         return abs(current[0] - end[0]) + abs(current[1] - end[1])
+    
+    def can_move_to(self, new_x, new_y, robots):
+        for robot in robots:
+            if robot is not self and abs(new_x - robot.x) < CELL_SIZE and abs(new_y - robot.y) < CELL_SIZE:
+                return False
+        return True
 
     def get_neighbors(self, node):
         x, y = node
@@ -128,7 +158,7 @@ while True:
 
     # Update robots
     for robot in robots:
-        robot.update()
+        robot.update(robots)
         # If the robot reached its target node, assign a new random target node
         if not robot.path_planned and robot.target_node is None:
             target_node = random.choice(random.choice(nodes))
