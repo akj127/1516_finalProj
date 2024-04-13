@@ -32,22 +32,29 @@ class Robot:
         if self.path_planned:
             self.path = self.find_path()
 
+    # recompute path after n steps 
     def update(self):
-        if self.path_planned and self.path:
-            next_node = self.path[0]
-            dx = 1 if next_node.x > self.x else -1 if next_node.x < self.x else 0
-            dy = 1 if next_node.y > self.y else -1 if next_node.y < self.y else 0
-            self.x += dx
-            self.y += dy
-            if self.x == next_node.x and self.y == next_node.y:
-                self.path.pop(0)
-        elif self.target_node:
-            dx = 1 if self.target_node.x > self.x else -1 if self.target_node.x < self.x else 0
-            dy = 1 if self.target_node.y > self.y else -1 if self.target_node.y < self.y else 0
-            self.x += dx
-            self.y += dy
-            if self.x == self.target_node.x and self.y == self.target_node.y:
-                self.target_node = None
+        while self.x != self.target_node.x and self.y != self.target_node.y:
+            i = 0
+            # n = 5 steps
+            while i < 5:
+                if self.path_planned and self.path:
+                    next_node = self.path[0]
+                    dx = 1 if next_node.x > self.x else -1 if next_node.x < self.x else 0
+                    dy = 1 if next_node.y > self.y else -1 if next_node.y < self.y else 0
+                    self.x += dx
+                    self.y += dy
+                    if self.x == next_node.x and self.y == next_node.y:
+                        self.path.pop(0)
+                elif self.target_node:
+                    dx = 1 if self.target_node.x > self.x else -1 if self.target_node.x < self.x else 0
+                    dy = 1 if self.target_node.y > self.y else -1 if self.target_node.y < self.y else 0
+                    self.x += dx
+                    self.y += dy
+                    if self.x == self.target_node.x and self.y == self.target_node.y:
+                        self.target_node = None
+                i = i + 1
+            robot.move_to_node(target_node.x // CELL_SIZE, target_node.y // CELL_SIZE)
 
     def find_path(self):
         start = (self.x // CELL_SIZE, self.y // CELL_SIZE)
