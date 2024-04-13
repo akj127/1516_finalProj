@@ -40,7 +40,7 @@ class Robot:
                 return False
         return True
     
-    def update(self):
+    def update(self, robots):
         if self.wait_timer > 0:
             self.wait_timer -= 1
             return
